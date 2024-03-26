@@ -1,9 +1,66 @@
 import torch.nn.functional as F
 import torch
-from utils import affine_3d_grid_generator
+
 from IPython import embed 
 import time
- 
+import torch
+from torch.autograd import Function
+from torch.autograd.function import once_differentiable
+import torch.backends.cudnn as cudnn
+
+MODE_ZEROS = 0
+MODE_BORDER = 1
+
+
+def affine_grid(theta, size):
+    return AffineGridGenerator.apply(theta, size)
+
+
+# TODO: Port these completely into C++
+class AffineGridGenerator(Function):
+
+    @staticmethod
+    def _enforce_cudnn(input):
+        if not cudnn.enabled:
+            raise RuntimeError("AffineGridGenerator needs CuDNN for "
+                               "processing CUDA inputs, but CuDNN is not enabled")
+        assert cudnn.is_acceptable(input)
+
+    @staticmethod
+    def forward(ctx, theta, size):
+        assert type(size) == torch.Size
+        N, C, D, H, W = size
+        ctx.size = size
+
+        #ctx.is_cuda = True
+
+        base_grid = theta.new(N, D, H, W, 4)
+
+        w_points = (torch.linspace(-1, 1, W) if W > 1 else torch.Tensor([-1]))
+        h_points = (torch.linspace(-1, 1, H) if H > 1 else torch.Tensor([-1])).unsqueeze(-1)
+        d_points = (torch.linspace(-1, 1, D) if D > 1 else torch.Tensor([-1])).unsqueeze(-1).unsqueeze(-1)
+
+        base_grid[:, :, :, :, 0] = w_points
+        base_grid[:, :, :, :, 1] = h_points
+        base_grid[:, :, :, :, 2] = d_points
+        base_grid[:, :, :, :, 3] = 1
+        ctx.base_grid = base_grid
+        grid = torch.bmm(base_grid.view(N, D * H * W, 4), theta.transpose(1, 2))
+        grid = grid.view(N, D, H, W, 3)
+        return grid
+
+    @staticmethod
+    @once_differentiable
+    def backward(ctx, grad_grid):
+        N, C, D, H, W = ctx.size
+        assert grad_grid.size() == torch.Size([N, D, H, W, 3])
+        base_grid = ctx.base_grid
+        grad_theta = torch.bmm(
+            base_grid.view(N, D * H * W, 4).transpose(1, 2),
+            grad_grid.view(N, D * H * W, 3))
+        grad_theta = grad_theta.transpose(1, 2)
+        return grad_theta, None
+
 
 def stn_all_ratations(params, inverse=False):
     theta, theta_x, theta_y, theta_z = stn_all_ratations_with_all_theta(params, inverse)
@@ -64,7 +121,6 @@ def rotate(angles):
     theta = stn_all_ratations(params)
 
     return theta
-
  
 def shift(axes):
     theta = torch.eye(4, device=axes.device)
@@ -73,9 +129,10 @@ def shift(axes):
     theta[2, 3] = axes[2]
 
     return theta
+
 def transform(theta, x, y=None, w=None, w2=None):
     theta = theta[0:3, :].view(-1, 3, 4)
-    grid = affine_3d_grid_generator.affine_grid(theta, x[None].shape)
+    grid = affine_grid(theta, x[None].shape)
     if x.device.type == 'cuda':
         grid = grid.cuda()
     x = F.grid_sample(x[None], grid, mode='bilinear', padding_mode='zeros', align_corners=True)[0]

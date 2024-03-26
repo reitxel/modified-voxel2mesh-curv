@@ -120,6 +120,10 @@ class Feature2VertexLayer(nn.Module):
         for i in range(hidden_layer_count, 1, -1):
             self.gconv += [GraphConv(i * in_features // hidden_layer_count, (i-1) * in_features // hidden_layer_count, batch_norm)]
         self.gconv_layer = nn.Sequential(*self.gconv)
+        
+        # takes the output features of the previous graph convolution layers and maps them 
+        # to a 3-dimensional feature space. This last layer is responsible for converting 
+        # the extracted features to the desired vertex attributes in the mesh representation.
         self.gconv_last = GraphConv(in_features // hidden_layer_count, 3, batch_norm)
 
     def forward(self, features, adjacency_matrix, degree_matrix, vertices, faces):

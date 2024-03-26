@@ -13,7 +13,7 @@ def read_obj(filepath):
         line = fp.readline() 
         cnt = 1 
         while line: 
-            if line[0] is not '#': 
+            if line[0] != '#': 
                 cnt = cnt + 1 
                 values = [float(x) for x in line.split('\n')[0].split(' ')[1:]] 
                 if line[:2] == 'vn':  
@@ -27,10 +27,10 @@ def read_obj(filepath):
         normals = np.array(normals)
         faces = np.array(faces)
         faces = np.int64(faces) - 1
-        if len(normals) > 0:
-            return vertices, faces, normals
-        else:
-            return vertices, faces
+        #if len(normals) > 0:
+        #    return vertices, faces, normals
+        #else:
+        return vertices, faces
 
 
 def save_to_obj(filepath, points, faces, normals=None): 

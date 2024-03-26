@@ -10,11 +10,8 @@ import os
 from scipy import ndimage
 from IPython import embed
 import wandb
+import SimpleITK as sitk
 from utils.rasterize.rasterize import Rasterize
-# from utils import stns
-
-
- 
 
 class Structure(object):
 
@@ -22,7 +19,7 @@ class Structure(object):
         self.voxel = voxel 
         self.mesh = mesh   
         self.points = points
- 
+
 def write_to_wandb(writer, epoch, split, performences, num_classes): 
     log_vals = {}
     for key, value in performences[split].items():
@@ -33,7 +30,6 @@ def write_to_wandb(writer, epoch, split, performences, num_classes):
         wandb.log(log_vals)
     except:
         print('')
-
 
 class Evaluator(object):
     def __init__(self, net, optimizer, data, save_path, config, support):
@@ -46,8 +42,8 @@ class Evaluator(object):
         self.config = config
         self.support = support
         self.count = 0 
-
-
+        
+        
     def save_model(self, epoch):
 
         torch.save({
@@ -55,17 +51,16 @@ class Evaluator(object):
             'model_state_dict': self.net.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict()
         }, self.save_path + '/model.pth')
-
-
-    def evaluate(self, epoch, writer=None, backup_writer=None):
+       
+    # change splitmode to DataModes.TESTING to test the model with pretrained weights
+    def evaluate(self, epoch, splitmode=DataModes.VALIDATION, writer=None, backup_writer=None):
         # self.net = self.net.eval()
         performences = {}
         predictions = {}
 
-        for split in [DataModes.TESTING]:
+        for split in [splitmode]:
             dataloader = DataLoader(self.data[split], batch_size=1, shuffle=False) 
             performences[split], predictions[split] = self.evaluate_set(dataloader)
-
             write_to_wandb(writer, epoch, split, performences, self.config.num_classes)
 
         if self.support.update_checkpoint(best_so_far=self.current_best, new_value=performences):
@@ -76,7 +71,7 @@ class Evaluator(object):
             
              
             self.save_model(epoch)
-            self.save_results(predictions[DataModes.TESTING], epoch, performences[DataModes.TESTING], self.save_path, '/testing_')
+            self.save_results(predictions[splitmode], epoch, performences[splitmode], self.save_path, '/testing_')
             self.current_best = performences
   
 
@@ -139,7 +134,6 @@ class Evaluator(object):
             x, y, y_hat = self.predict(data, self.config)
             result = self.support.evaluate(y, y_hat, self.config)
  
- 
             predictions.append((x, y, y_hat))
 
             for key, value in result.items():
@@ -181,6 +175,12 @@ class Evaluator(object):
             if y_hat.voxel is not None:
                 ys_voxels.append(y.voxel[0])
                 y_hats_voxels.append(y_hat.voxel[0]) 
+                # convert to SimpleITK image and save each predicted voxel
+                # y_hat_voxel_sitk = sitk.GetImageFromArray(y_hat.voxel[0].numpy())
+                y_voxel_sitk = sitk.GetImageFromArray(y.voxel[0].cpu().numpy().astype(np.int16))
+                sitk.WriteImage(y_voxel_sitk, f"{save_path}/voxels/{mode}true_voxel_{i}_epoch_{epoch}.nii.gz")
+                y_hat_voxel_sitk = sitk.GetImageFromArray(y_hat.voxel[0].cpu().numpy().astype(np.int16))
+                sitk.WriteImage(y_hat_voxel_sitk, f"{save_path}/voxels/{mode}pred_voxel_{i}_epoch_{epoch}.nii.gz")
  
      
         if performence is not None:
@@ -212,6 +212,6 @@ class Evaluator(object):
             overlay_overlap = blend_cpu(xs, y_overlap, 4)
             overlay = np.concatenate([overlay_y, overlay_y_hat, overlay_overlap], axis=2)
             io.imsave(save_path + mode + 'overlay_y_hat.tif', overlay)
-            
+
  
 

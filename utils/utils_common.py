@@ -3,7 +3,6 @@ import os
 import logging
 
 import numpy as np
-#import cv2
 import torch
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -27,21 +26,23 @@ def write_lines(path, lines):
     for line in lines:
         f.write(line + '\n')
     f.close()
- 
+
 def append_line(path, line):
     f = open(path, 'a')
     f.write(line + '\n')
     f.close() 
 
 def pytorch_count_params(model):
-  "count number trainable parameters in a pytorch model"
-  total_params = sum(reduce(lambda a, b: a*b, x.size()) for x in model.parameters())
-  return total_params
+    "count number trainable parameters in a pytorch model"
+    total_params = sum(reduce(lambda a, b: a*b, x.size()) for x in model.parameters())
+    return total_params
 
 def mkdir(path):
     if not os.path.isdir(path):
         os.mkdir(path)
 
+# blends image and mask together ot create a visualization that highlights the different regions in the image
+# based on the mask values. creates three masks for the different regions and combnes them with the original image
 def blend(img, mask):
 
     img = cv2.cvtColor(np.uint8(img * 255), cv2.COLOR_GRAY2RGB)
@@ -76,7 +77,8 @@ def crop_and_merge(tensor1, tensor2):
 
     return torch.cat((tensor1[slices], tensor2), 1)
 
-
+# processes the bounding box to ensure that it lies within the bounds of the image 
+# and determines if padding is needed to fit the bounding box entirely within the image
 def _box_in_bounds(box, image_shape):
     newbox = []
     pad_width = []
@@ -92,6 +94,8 @@ def _box_in_bounds(box, image_shape):
 
     return newbox, pad_width, needs_padding
 
+# determine the cropping indices, padding widths and the padding falg for extracting a patch
+# from an image centered around a specified point
 def crop_indices(image_shape, patch_shape, center):
     box = [(i - ps // 2, i - ps // 2 + ps) for i, ps in zip(center, patch_shape)]
     box, pad_width, needs_padding = _box_in_bounds(box, image_shape)
@@ -102,7 +106,7 @@ def crop(image, patch_shape, center, mode='constant'):
     slices, pad_width, needs_padding = crop_indices(image.shape, patch_shape, center)
     patch = image[slices]
 
-    if needs_padding and mode is not 'nopadding':
+    if needs_padding and mode != 'nopadding':
         if isinstance(image, np.ndarray):
             if len(pad_width) < patch.ndim:
                 pad_width.append((0, 0))
@@ -114,9 +118,9 @@ def crop(image, patch_shape, center, mode='constant'):
 
     return patch
 
- 
-
-
+# in this case it again blends the image using specific colors to create a visualization
+# that highlights the different classes in the image using specific colors
+# the first blend function is based on NumPy and OpenCV, while this designed to work with PyTorch tensors. 
 def blend(img, labels, num_classes):
     colors = torch.tensor([[0, 0, 0], [0, 255, 0], [255, 0, 0], [0, 0, 255], [255, 0, 255]]).cuda().float()
 

@@ -1,6 +1,9 @@
 from torch.utils.cpp_extension import load
 rasterize_cuda = load(
     'rasterize_cuda', ['./utils/rasterize/rasterize_cuda.cpp', './utils/rasterize/rasterize_cuda_kernel.cu'], verbose=True)
+
+#rasterize_cuda = load(
+#    'rasterize_cuda', ['C:/Users/rgonzal2/OneDrive - UMC Utrecht/Desktop/MRP - Raquel/pytorch3d/voxel2mesh-master/utils/rasterize/rasterize_cuda.cpp', 'C:/Users/rgonzal2/OneDrive - UMC Utrecht/Desktop/MRP - Raquel/pytorch3d/voxel2mesh-master/utils/rasterize/rasterize_cuda_kernel.cu'], verbose=True)
 # rasterize_cuda = load(
 #     'rasterize_cuda', ['./utils/rasterize/rasterize_cuda.cpp', './utils/rasterize/dst_tf_cuda_kernel.cu'], verbose=True)
 
@@ -10,7 +13,7 @@ from torch import nn
 from torch.autograd import Function
 import torch
 
-import rasterize_cuda
+#import rasterize_cuda
 from IPython import embed
 
 

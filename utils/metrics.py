@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from IPython import embed
 import torch.nn.functional as F
+
 def rmse_all(target, pred, num_classes):
     rmse = []
     pred = pred
@@ -30,8 +31,25 @@ def jaccard_index(target, pred, num_classes):
             ious.append(float(intersection) / float(union))
     return np.array(ious)
 
-def chamfer_directed(A, B):
+def dice_score(target, pred, num_classes, epsilon=1e-6):
+    dice_scores = []
+    pred = pred.view(-1)
+    target = target.view(-1)
+    
+    # Ignore Dice for background class ("0")
+    for cls in range(1, num_classes):
+        pred_inds = pred == cls
+        target_inds = target == cls
+        
+        intersection = pred_inds[target_inds].long().sum().data.cpu()  # Cast to long to prevent overflows
+        total = pred_inds.long().sum().data.cpu() + target_inds.long().sum().data.cpu()
+        
+        dice = (2. *  intersection + epsilon) / (total + epsilon)
+        dice_scores.append(dice.item())
+        
+    return np.array(dice_scores)
 
+def chamfer_directed(A, B):
 
     N1 = A.shape[1]
     N2 = B.shape[1]

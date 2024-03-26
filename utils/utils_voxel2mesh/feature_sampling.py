@@ -3,6 +3,7 @@ import torch
 from itertools import product
 import torch.nn.functional as F
 from utils.utils_voxel2mesh.graph_conv import GraphConvEdgeLengthWeighted as GraphConv 
+#from graph_conv import GraphConvEdgeLengthWeighted as GraphConv 
 from IPython import embed
 
 class SkipConnections(nn.Module): 

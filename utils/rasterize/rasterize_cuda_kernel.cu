@@ -177,10 +177,10 @@ __global__ void rasterize_cuda_forward_kernel(
     ) 
 {
 
-
-    const int x = blockIdx.x * blockDim.x + threadIdx.x;
-    const int y = blockIdx.y * blockDim.y + threadIdx.y;
-    const int z = blockIdx.z * blockDim.z + threadIdx.z;
+    // modified const int
+    const float x = blockIdx.x * blockDim.x + threadIdx.x;
+    const float y = blockIdx.y * blockDim.y + threadIdx.y;
+    const float z = blockIdx.z * blockDim.z + threadIdx.z;
 
     int D = shape[0];
     int H = shape[1];
@@ -221,7 +221,7 @@ __global__ void rasterize_cuda_forward_kernel(
 
 
     //   d_debug[H * W * z + W * y + x] = -100000;
-    int debug_count = 0;
+    // int debug_count = 0;
     while (done==0){
         done = 1;
         int border_intersection = 0;
@@ -337,10 +337,10 @@ __global__ void rasterize_cuda_backward_kernel(
     const torch::PackedTensorAccessor32<int32_t,1,torch::RestrictPtrTraits> shape
     ) 
 {
-
-    const int x = blockIdx.x * blockDim.x + threadIdx.x;
-    const int y = blockIdx.y * blockDim.y + threadIdx.y;
-    const int z = blockIdx.z * blockDim.z + threadIdx.z;
+    // modified const int
+    const float x = blockIdx.x * blockDim.x + threadIdx.x;
+    const float y = blockIdx.y * blockDim.y + threadIdx.y;
+    const float z = blockIdx.z * blockDim.z + threadIdx.z;
 
     float P[] = {x, y, z}; 
 
@@ -398,17 +398,17 @@ __global__ void rasterize_cuda_backward_kernel(
         // grad_vertices[faces[i][2]][1] = grad_V2[1];
         // grad_vertices[faces[i][2]][2] = grad_V2[2]; 
 
-        atomicAdd( &(grad_vertices[faces[i][0]][0]), grad_V0[0]);
-        atomicAdd( &(grad_vertices[faces[i][0]][1]), grad_V0[1]);
-        atomicAdd( &(grad_vertices[faces[i][0]][2]), grad_V0[2]); 
+        // atomicAdd( &(grad_vertices[faces[i][0]][0]), grad_V0[0]);
+        // atomicAdd( &(grad_vertices[faces[i][0]][1]), grad_V0[1]);
+        // atomicAdd( &(grad_vertices[faces[i][0]][2]), grad_V0[2]); 
 
-        atomicAdd( &(grad_vertices[faces[i][1]][0]), grad_V1[0]);
-        atomicAdd( &(grad_vertices[faces[i][1]][1]), grad_V1[1]);
-        atomicAdd( &(grad_vertices[faces[i][1]][2]), grad_V1[2]); 
+        // atomicAdd( &(grad_vertices[faces[i][1]][0]), grad_V1[0]);
+        // atomicAdd( &(grad_vertices[faces[i][1]][1]), grad_V1[1]);
+        // atomicAdd( &(grad_vertices[faces[i][1]][2]), grad_V1[2]); 
 
-        atomicAdd( &(grad_vertices[faces[i][2]][0]), grad_V2[0]);
-        atomicAdd( &(grad_vertices[faces[i][2]][1]), grad_V2[1]);
-        atomicAdd( &(grad_vertices[faces[i][2]][2]), grad_V2[2]); 
+        // atomicAdd( &(grad_vertices[faces[i][2]][0]), grad_V2[0]);
+        // atomicAdd( &(grad_vertices[faces[i][2]][1]), grad_V2[1]);
+        // atomicAdd( &(grad_vertices[faces[i][2]][2]), grad_V2[2]); 
         
 
     }
