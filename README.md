@@ -10,7 +10,7 @@ The Circle of Willis (CoW) is a group of vessels connecting major circulations o
   
 
 <p class="aligncenter">
-    <img src="./images/architecture.png" width="650">
+    <img src="./images/networkf.png" width="650">
 </p>
 Fig. 1. Architectures (a) The Pixel2Mesh-3D architecture, a straightforward extension of [20], uses a surface decoder but no voxel decoder. (b) By contrast, our
 Voxel2Mesh architecture takes as input an image and spherical mesh. They are jointly
