@@ -24,6 +24,8 @@ To obtain information from the different components of the CoW, Time of Flight M
 ## Running Experiments
 
 &emsp; Step 1: Update config.py. Set the path to the dataset and the directory to save the results.
+
 &emsp; Step 2: Preprocess data, and store in  ```data_crops{}``` folders.
+
 &emsp; Step 3: Execute ```python main.py``` and to training or evaluate network with pretrained weights. 
 
