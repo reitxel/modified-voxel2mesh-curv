@@ -34,5 +34,5 @@ To obtain information from the different components of the CoW, Time of Flight M
 
 &emsp; Step 2: Preprocess data, and store in  ```data_crops_{}``` folders.
 
-&emsp; Step 3: Execute ```python main.py``` and to training or evaluate network with pretrained weights. 
+&emsp; Step 3: Execute ```python main.py``` to train or evaluate network with pretrained weights. 
 
